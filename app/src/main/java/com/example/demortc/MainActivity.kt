@@ -159,6 +159,7 @@ class MainActivity : ComponentActivity() {
                 CallContent(
                     modifier = Modifier.background(color = Color.White),
                     call = call,
+                    appBarContent = {}, // Removes the default app bar (back and hang-up icons)
                     onBackPressed = {
                         coroutineScope.launch {
                             call.leave() // Leave the call asynchronously
@@ -190,7 +191,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 {
-                                    // Custom Hang-Up Button that closes the app
+                                    // Custom Hang-Up Button
                                     Text(
                                         text = "Hang Up",
                                         color = Color.Red,
@@ -209,6 +210,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 )
+
             }
         }
     }
