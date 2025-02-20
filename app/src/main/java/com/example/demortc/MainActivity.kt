@@ -41,6 +41,11 @@ import io.getstream.video.android.core.GEO
 import io.getstream.video.android.core.RealtimeConnection
 import io.getstream.video.android.core.StreamVideoBuilder
 import io.getstream.video.android.model.User
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +74,11 @@ class MainActivity : ComponentActivity() {
         ).build()
 
         setContent {
+            val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            val coroutineScope = CoroutineScope(Dispatchers.Main)
+
+
+
             // Request permissions and join a call, which type is `default` and id is `123`.
             val call = client.call(type = "default", id = callId)
             LaunchCallPermissions(
@@ -149,7 +159,12 @@ class MainActivity : ComponentActivity() {
                 CallContent(
                     modifier = Modifier.background(color = Color.White),
                     call = call,
-                    onBackPressed = { onBackPressed() },
+                    onBackPressed = {
+                        coroutineScope.launch {
+                            call.leave() // Leave the call asynchronously
+                            finishAffinity() // Close the app
+                        }
+                    },
                     controlsContent = {
                         ControlActions(
                             call = call,
@@ -174,6 +189,22 @@ class MainActivity : ComponentActivity() {
                                         onCallAction = { call.camera.flip() }
                                     )
                                 },
+                                {
+                                    // Custom Hang-Up Button that closes the app
+                                    Text(
+                                        text = "Hang Up",
+                                        color = Color.Red,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier
+                                            .clickable {
+                                                coroutineScope.launch {
+                                                    call.leave() // Leave the call
+                                                    finishAffinity() // Close the app
+                                                }
+                                            }
+                                            .padding(10.dp)
+                                    )
+                                }
                             )
                         )
                     }
