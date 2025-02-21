@@ -76,141 +76,95 @@ class MainActivity : ComponentActivity() {
         setContent {
             val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             val coroutineScope = CoroutineScope(Dispatchers.Main)
+            var isCallStarted by remember { mutableStateOf(false) }
 
-
-
-            // Request permissions and join a call, which type is `default` and id is `123`.
             val call = client.call(type = "default", id = callId)
-            LaunchCallPermissions(
-                call = call,
-                onAllPermissionsGranted = {
-                    // All permissions are granted so that we can join the call.
-                    val result = call.join(create = true)
-                    result.onError {
-                        Toast.makeText(applicationContext, it.message, Toast.LENGTH_LONG).show()
-                    }
-                }
-            )
 
-            // Apply VideoTheme
-//            VideoTheme {
-//                val remoteParticipants by call.state.remoteParticipants.collectAsState()
-//                val remoteParticipant = remoteParticipants.firstOrNull()
-//                val me by call.state.me.collectAsState()
-//                val connection by call.state.connection.collectAsState()
-//                var parentSize: IntSize by remember { mutableStateOf(IntSize(0, 0)) }
-//
-//                Box(
-//                    contentAlignment = Alignment.Center,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(VideoTheme.colors.baseSenary)
-//                        .onSizeChanged { parentSize = it }
-//                ) {
-//                    if (remoteParticipant != null) {
-//                        ParticipantVideo(
-//                            modifier = Modifier.fillMaxSize(),
-//                            call = call,
-//                            participant = remoteParticipant
-//                        )
-//                    } else {
-//                        if (connection != RealtimeConnection.Connected) {
-//                            Text(
-//                                text = "waiting for a remote participant...",
-//                                fontSize = 30.sp,
-//                                color = VideoTheme.colors.basePrimary
-//                            )
-//                        } else {
-//                            Text(
-//                                modifier = Modifier.padding(30.dp),
-//                                text = "Join call ${call.id} in your browser to see the video here",
-//                                fontSize = 30.sp,
-//                                color = VideoTheme.colors.basePrimary,
-//                                textAlign = TextAlign.Center
-//                            )
-//                        }
-//                    }
-//
-//                    // floating video UI for the local video participant
-//                    me?.let { localVideo ->
-//                        FloatingParticipantVideo(
-//                            modifier = Modifier.align(Alignment.TopEnd),
-//                            call = call,
-//                            participant = localVideo,
-//                            parentBounds = parentSize
-//                        )
-//                    }
-//                }
-//            }
-//        }
-
-//            VideoTheme {
-//                CallContent(
-//                    modifier = Modifier.fillMaxSize(),
-//                    call = call,
-//                    onBackPressed = { onBackPressed() },
-//                )
-//            }
-
-            VideoTheme {
-                val isCameraEnabled by call.camera.isEnabled.collectAsState()
-                val isMicrophoneEnabled by call.microphone.isEnabled.collectAsState()
-
-                CallContent(
-                    modifier = Modifier.background(color = Color.White),
-                    call = call,
-                    appBarContent = {}, // Removes the default app bar (back and hang-up icons)
-                    onBackPressed = {
-                        coroutineScope.launch {
-                            call.leave() // Leave the call asynchronously
-                            finishAffinity() // Close the app
-                        }
-                    },
-                    controlsContent = {
-                        ControlActions(
-                            call = call,
-                            actions = listOf(
-                                {
-                                    ToggleCameraAction(
-                                        modifier = Modifier.size(52.dp),
-                                        isCameraEnabled = isCameraEnabled,
-                                        onCallAction = { call.camera.setEnabled(it.isEnabled) }
-                                    )
-                                },
-                                {
-                                    ToggleMicrophoneAction(
-                                        modifier = Modifier.size(52.dp),
-                                        isMicrophoneEnabled = isMicrophoneEnabled,
-                                        onCallAction = { call.microphone.setEnabled(it.isEnabled) }
-                                    )
-                                },
-                                {
-                                    FlipCameraAction(
-                                        modifier = Modifier.size(52.dp),
-                                        onCallAction = { call.camera.flip() }
-                                    )
-                                },
-                                {
-                                    // Custom Hang-Up Button
-                                    Text(
-                                        text = "Hang Up",
-                                        color = Color.Red,
-                                        fontSize = 18.sp,
-                                        modifier = Modifier
-                                            .clickable {
-                                                coroutineScope.launch {
-                                                    call.leave() // Leave the call
-                                                    finishAffinity() // Close the app
-                                                }
-                                            }
-                                            .padding(10.dp)
-                                    )
+            if (!isCallStarted) {
+                // Show "Start Video Call" button
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Start Video Call",
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .background(Color.Blue)
+                            .padding(16.dp)
+                            .clickable {
+                                isCallStarted = true
+                                coroutineScope.launch {
+                                    val result = call.join(create = true)
+                                    result.onError {
+                                        Toast.makeText(applicationContext, it.message, Toast.LENGTH_LONG).show()
+                                    }
                                 }
-                            )
-                        )
-                    }
-                )
+                            }
+                    )
+                }
+            } else {
+                // Video call UI after clicking the button
+                VideoTheme {
+                    val isCameraEnabled by call.camera.isEnabled.collectAsState()
+                    val isMicrophoneEnabled by call.microphone.isEnabled.collectAsState()
 
+                    CallContent(
+                        modifier = Modifier.background(color = Color.White),
+                        call = call,
+                        appBarContent = {},
+                        onBackPressed = {
+                            coroutineScope.launch {
+                                call.leave()
+                                finishAffinity()
+                            }
+                        },
+                        controlsContent = {
+                            ControlActions(
+                                call = call,
+                                actions = listOf(
+                                    {
+                                        ToggleCameraAction(
+                                            modifier = Modifier.size(52.dp),
+                                            isCameraEnabled = isCameraEnabled,
+                                            onCallAction = { call.camera.setEnabled(it.isEnabled) }
+                                        )
+                                    },
+                                    {
+                                        ToggleMicrophoneAction(
+                                            modifier = Modifier.size(52.dp),
+                                            isMicrophoneEnabled = isMicrophoneEnabled,
+                                            onCallAction = { call.microphone.setEnabled(it.isEnabled) }
+                                        )
+                                    },
+                                    {
+                                        FlipCameraAction(
+                                            modifier = Modifier.size(52.dp),
+                                            onCallAction = { call.camera.flip() }
+                                        )
+                                    },
+                                    {
+                                        // Custom Hang-Up Button
+                                        Text(
+                                            text = "Hang Up",
+                                            color = Color.Red,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier
+                                                .clickable {
+                                                    coroutineScope.launch {
+                                                        call.leave()
+                                                        finishAffinity()
+                                                    }
+                                                }
+                                                .padding(10.dp)
+                                        )
+                                    }
+                                )
+                            )
+                        }
+                    )
+                }
             }
         }
     }
