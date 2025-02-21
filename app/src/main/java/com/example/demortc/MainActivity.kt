@@ -52,36 +52,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val apiKey = "mmhfdzb5evj2"
-        val userToken =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3Byb250by5nZXRzdHJlYW0uaW8iLCJzdWIiOiJ1c2VyL1dhdHRvIiwidXNlcl9pZCI6IldhdHRvIiwidmFsaWRpdHlfaW5fc2Vjb25kcyI6NjA0ODAwLCJpYXQiOjE3NDAwNzI5ODksImV4cCI6MTc0MDY3Nzc4OX0.zy253Q9M4V9rXNg8mo_KI12lyAgKUnG88DODh33zruo"
+        val userToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3Byb250by5nZXRzdHJlYW0uaW8iLCJzdWIiOiJ1c2VyL1dhdHRvIiwidXNlcl9pZCI6IldhdHRvIiwidmFsaWRpdHlfaW5fc2Vjb25kcyI6NjA0ODAwLCJpYXQiOjE3NDAwNzI5ODksImV4cCI6MTc0MDY3Nzc4OX0.zy253Q9M4V9rXNg8mo_KI12lyAgKUnG88DODh33zruo"
         val userId = "Watto"
         val callId = "nqYDEmyCeL74"
 
-        // Create a user.
         val user = User(
-            id = userId, // any string
-            name = "Tutorial", // name and image are used in the UI
-            image = "https://bit.ly/2TIt8NR",
+            id = userId,
+            name = "Tutorial",
+            image = "https://bit.ly/2TIt8NR"
         )
 
-        // Initialize StreamVideo. For a production app, we recommend adding the client to your Application class or di module.
         val client = StreamVideoBuilder(
             context = applicationContext,
             apiKey = apiKey,
             geo = GEO.GlobalEdgeNetwork,
             user = user,
-            token = userToken,
+            token = userToken
         ).build()
 
         setContent {
-            val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             val coroutineScope = CoroutineScope(Dispatchers.Main)
             var isCallStarted by remember { mutableStateOf(false) }
-
             val call = client.call(type = "default", id = callId)
 
             if (!isCallStarted) {
-                // Show "Start Video Call" button
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -105,7 +99,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             } else {
-                // Video call UI after clicking the button
                 VideoTheme {
                     val isCameraEnabled by call.camera.isEnabled.collectAsState()
                     val isMicrophoneEnabled by call.microphone.isEnabled.collectAsState()
@@ -117,7 +110,7 @@ class MainActivity : ComponentActivity() {
                         onBackPressed = {
                             coroutineScope.launch {
                                 call.leave()
-                                finishAffinity()
+                                isCallStarted = false
                             }
                         },
                         controlsContent = {
@@ -145,7 +138,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     },
                                     {
-                                        // Custom Hang-Up Button
                                         Text(
                                             text = "Hang Up",
                                             color = Color.Red,
@@ -154,7 +146,7 @@ class MainActivity : ComponentActivity() {
                                                 .clickable {
                                                     coroutineScope.launch {
                                                         call.leave()
-                                                        finishAffinity()
+                                                        isCallStarted = false
                                                     }
                                                 }
                                                 .padding(10.dp)
@@ -166,22 +158,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-        }
-    }
-
-    @Composable
-    fun Greeting(name: String, modifier: Modifier = Modifier) {
-        Text(
-            text = "Hello $name!",
-            modifier = modifier
-        )
-    }
-
-    @Preview(showBackground = true)
-    @Composable
-    fun GreetingPreview() {
-        DemoRTCTheme {
-            Greeting("Android")
         }
     }
 }
